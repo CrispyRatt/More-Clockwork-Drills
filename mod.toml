@@ -1,0 +1,12 @@
+identifier = "BetterMiner:CrispyRatt"
+name = "Better Clockwork Drills"
+description = "Adds improved versions of the clockwork drill that mine faster"
+authors = ["Crispy Ratt"]
+tags = ["Machines"]
+dependencies = []
+game_versions = ["1.4"]
+entry = "entry.rhai"
+version = "1.4.0"
+sync_mode = "Required"
+provide_to_others = false
+steam_workshop_id = 3634898560

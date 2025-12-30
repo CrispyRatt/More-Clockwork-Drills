@@ -1,0 +1,4 @@
+frames = 4
+offset = 0
+frame_rate = 50
+frame_layout = [0, 1, 2, 3]
