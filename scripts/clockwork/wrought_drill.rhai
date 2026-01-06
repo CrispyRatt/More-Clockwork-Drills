@@ -30,7 +30,7 @@ fn define(mod_info) {
 			"WroughtDrill:BetterMiner",
             "Wrought Iron Drill",
             "An upgraded method of drilling without your bare hands.\nOutputs automatically to the top.",
-            "Building",
+            "Machines",
             "WroughtDrillIcon:BetterMiner",
 			construct::ROT_NONE
 		).variant(
@@ -46,7 +46,7 @@ fn define(mod_info) {
 					WeakConstructRequirement("Stone:VoxelEras")
 				)
 		)
-		.priority(0)
+		.priority(2)
 		.cost(WeakItemStack("Concrete:VoxelEras", 4))
 		.cost(WeakItemStack("WroughtIronGear:VoxelEras", 2))
 		.cost(WeakItemStack("WroughtIronPlate:VoxelEras", 4))

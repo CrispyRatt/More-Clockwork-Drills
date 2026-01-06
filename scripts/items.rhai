@@ -37,7 +37,7 @@ fn define(mod_info) {
 		.with_input(WeakItemStack("CarbonSteelRing:VoxelEras", 3))
 		.with_input(WeakItemStack("CarbonSteelPlate:VoxelEras", 2))
 		.with_input(WeakItemStack("CarbonSteelBolt:VoxelEras", 6))
-		.with_output(WeakItemStack("SmallSteelGear:BetterMiner", 3))
+		.with_output(WeakItemStack("SmallSteelGear:BetterMiner", 6))
 	);
 
 	mod_info.add(
@@ -45,11 +45,12 @@ fn define(mod_info) {
 			"CarbonSteelCore:BetterMiner",
 			"Form a more durable Clockwork Core",
 			3,
-			"ClockworkCoreIcon:VoxelEras"
+			"CarbonSteelCoreIcon:BetterMiner"
 		).crafted_in("Assembler:VoxelEras")
 		.with_input(WeakItemStack("SmallSteelGear:BetterMiner", 3))
 		.with_input(WeakItemStack("CarbonSteelPlate:VoxelEras", 1))
-		.with_output(WeakItemStack("CarbonSteelCore:BetterMiner", 1))
+		.with_input(WeakItemStack("ClockworkCore:VoxelEras", 1))
+		.with_output(WeakItemStack("CarbonSteelCore:BetterMiner", 2))
 	);
 
 }
