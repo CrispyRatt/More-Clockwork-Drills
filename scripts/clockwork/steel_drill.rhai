@@ -47,10 +47,8 @@ fn define(mod_info) {
 				)
 		)
 		.priority(3)
-		.cost(WeakItemStack("CarbonSteelGear:VoxelEras", 4))
-		.cost(WeakItemStack("CarbonSteelPlate:VoxelEras", 8))
+		.cost(WeakItemStack("CarbonSteelMachineFrame:VoxelEras", 1))
 		.cost(WeakItemStack("CarbonSteelCore:BetterMiner", 2))
-		.cost(WeakItemStack("SmallSteelGear:BetterMiner", 6))
 	);
 
 	mod_info.add(SoundBuilder(
@@ -153,10 +151,8 @@ private fn define_variants(mod_info) {
 
 fn on_break(voxel, location, target, entity, game_state) {
 	if location == target {
-		game_state.drop(WeakItemStack("CarbonSteelPlate:VoxelEras", 8), location);
-		game_state.drop(WeakItemStack("CarbonSteelGear:VoxelEras", 4), location);
+		game_state.drop(WeakItemStack("CarbonSteelMachineFrame:VoxelEras", 1), location);
 		game_state.drop(WeakItemStack("CarbonSteelCore:BetterMiner", 2), location);
-		game_state.drop(WeakItemStack("SmallSteelGear:BetterMiner", 6), location);
 	}
 
 	event::ACCEPT

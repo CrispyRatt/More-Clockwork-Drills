@@ -47,9 +47,8 @@ fn define(mod_info) {
 				)
 		)
 		.priority(2)
+		.cost(WeakItemStack("WroughtIronMachineFrame:VoxelEras", 1))
 		.cost(WeakItemStack("Concrete:VoxelEras", 4))
-		.cost(WeakItemStack("WroughtIronGear:VoxelEras", 2))
-		.cost(WeakItemStack("WroughtIronPlate:VoxelEras", 4))
 	);
 
 	mod_info.add(SoundBuilder(
@@ -153,8 +152,7 @@ private fn define_variants(mod_info) {
 fn on_break(voxel, location, target, entity, game_state) {
 	if location == target {
 		game_state.drop(WeakItemStack("Concrete:VoxelEras", 4), location);
-		game_state.drop(WeakItemStack("WroughtIronGear:VoxelEras", 2), location);
-		game_state.drop(WeakItemStack("WroughtIronPlate:VoxelEras", 4), location);
+		game_state.drop(WeakItemStack("WroughtIronMachineFrame:VoxelEras", 1), location);
 	}
 
 	event::ACCEPT
