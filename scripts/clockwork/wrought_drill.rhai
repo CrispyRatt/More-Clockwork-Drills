@@ -1,5 +1,5 @@
 import "scripts/audio_source" as audio;
-
+// wrought_drill 
 const MAX_ENERGY = game::TICK_RATE * 96;
 const ENERGY_PER_INTERACT = game::TICK_RATE * 12;
 const INTERACT_DELAY = game::TICK_RATE / 4;
