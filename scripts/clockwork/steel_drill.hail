@@ -1,0 +1,449 @@
+import "/VoxelEras:DestinyHailstorm/scripts/consts" as consts;
+import "/VoxelEras:DestinyHailstorm/scripts/audio_source" as audio;
+
+const CRAFTER_IDENTIFIER = "SteelDrill:BetterMiner";
+const DESCRIPTION = "Drill straight through your problems with this upgraded Clockwork Drill! Have I heard this somewhere before..?\nOutputs automatically to the top.";
+
+const MAX_ENERGY = TICK_RATE * 96;
+const ENERGY_PER_INTERACT = TICK_RATE * 12;
+const INTERACT_DELAY = TICK_RATE / 4;
+const PROGRESS_TO_MINE = TICK_RATE * 6;
+
+fn define(mut mod_data: ModData) {
+	
+	mod_data.add(TextureBuilder(
+        "SteelDrillIcon:BetterMiner",
+        "assets/textures/SteelDrillSideOffAnim.png",
+    ));
+
+	mod_data.add(TextureBuilder(
+        "SteelOutputBlock:BetterMiner",
+        "assets/textures/SteelOutput.png"
+    ));
+
+	define_variants(mod_data);
+
+	mod_data.add(ItemBuilder(
+		CRAFTER_IDENTIFIER,
+		"Carbon Steel Drill",
+		DESCRIPTION,
+		"SteelDrillIcon:BetterMiner"
+	).stacking_to(32)
+	.pipette(CRAFTER_IDENTIFIER));
+
+	mod_data.add(
+		RecipeBuilder(
+			CRAFTER_IDENTIFIER,
+			"Assemble a Carbon Steel Drill",
+			5,
+			"SteelDrillIcon:BetterMiner",
+			["Anvil:VoxelEras"],
+			[
+			WeakItemStack("CarbonSteelMachineFrame:VoxelEras", 1),
+			WeakItemStack("CarbonSteelCore:BetterMiner", 2)
+			],
+			[WeakItemStack(CRAFTER_IDENTIFIER, 1)]
+		));
+
+	let mut default_metadata = MetaData();
+	default_metadata.set_inventory([Option<ItemStack>()]);
+	let default_place_variant = WeakVoxelVariant("SteelDrillv2:BetterMiner", voxel::ROT_UP, default_metadata);
+	
+	mod_data.add(
+		ConstructBuilder(
+			CRAFTER_IDENTIFIER,
+            "Carbon Steel Drill",
+            DESCRIPTION,
+            "Machines",
+            "SteelDrillIcon:BetterMiner",
+			construct::ROT_NONE
+		).variant(
+			ConstructVariantBuilder(voxel::ROT_UP)
+				.place(
+					0, 0, 0,
+					default_place_variant
+				).require(
+					0, -1, 0,
+					["Ore"]
+				)
+		).cost(WeakItemStack(CRAFTER_IDENTIFIER, 1))
+		.priority(2));
+
+	mod_data.add(SoundBuilder(
+		"SteelDrillProgress1:BetterMiner",
+		"Steel Drill Progress",
+		"/VoxelEras:DestinyHailstorm/assets/sounds/ClockworkDrillProgress1.mp3"
+	));
+
+	mod_data.add(SoundBuilder(
+		"SteelDrillProgress2:BetterMiner",
+		"Steel Drill Progress",
+		"/VoxelEras:DestinyHailstorm/assets/sounds/ClockworkDrillProgress2.mp3"
+	));
+
+	mod_data.add(SoundBuilder(
+		"SteelDrillTick:BetterMiner",
+		"Steel Drill Tick",
+		"/VoxelEras:DestinyHailstorm/assets/sounds/ClockworkDrillTick.mp3"
+	));
+
+	for ore in ["Iron", "Copper", "Tin"] {
+		mod_data.add(RecipeBuilder(
+			"SteelDrill" + ore + "Ore:BetterMiner",
+			"Mine " + ore + " Ore",
+			0,
+			"Icon" + ore + "Ore:VoxelEras",
+			[CRAFTER_IDENTIFIER],
+			Vec<WeakItemStack>(),
+			[WeakItemStack(ore + "Ore:VoxelEras", 3)]
+		).with_complexity(TICK_RATE * 8));
+	}
+
+	mod_data.add(RecipeBuilder(
+		"SteelDrillCoalOre:BetterMiner",
+		"Mine Coal Ore",
+		0,
+		"CoalIcon:VoxelEras",
+		[CRAFTER_IDENTIFIER],
+		Vec<WeakItemStack>(),
+		[WeakItemStack("Coal:VoxelEras", 5)]
+	).with_complexity(TICK_RATE * 8));
+
+	mod_data.add(RecipeBuilder(
+		"SteelDrillStone:BetterMiner",
+		"Mine Stone",
+		0,
+		"BlockIconStone:VoxelEras",
+		[CRAFTER_IDENTIFIER],
+		Vec<WeakItemStack>(),
+		[WeakItemStack("Stone:VoxelEras", 3)]
+	).with_complexity(TICK_RATE * 8));
+
+	mod_data.add(RecipeBuilder(
+		"SteelDrillFloor:BetterMiner",
+		"Mine Flore",
+		0,
+		"BlockFloor:VoxelEras",
+		[CRAFTER_IDENTIFIER],
+		Vec<WeakItemStack>(),
+		[WeakItemStack("Stone:VoxelEras", 3)]
+	).with_complexity(TICK_RATE * 8));
+}
+
+fn define_variants(mut mod_data: ModData) {
+	mod_data.add(TextureBuilder(
+        "SteelDrillOffBlock:BetterMiner",
+        "assets/textures/SteelDrillSideOffAnim.png"
+    ));
+
+	// Off
+	mod_data.add(
+		VoxelBuilder(
+			"SteelDrillv2:BetterMiner",
+			"Steel Drill (Off)",
+			Some("scripts/clockwork/steel_drill.hail")
+		).model(SolidVoxelModel(
+			"SteelOutputBlock:BetterMiner",
+			"SteelDrillOffBlock:BetterMiner",
+			"BlockOakPlank:VoxelEras"
+		))
+		.pipette(CRAFTER_IDENTIFIER)
+		.drop(WeakItemStack(CRAFTER_IDENTIFIER, 1))
+		.break_rate(consts::break_rate_machine())
+		.tag("Solid")
+		.tag("PipeConnect")
+		.tag("ClockworkConsumer")
+		.does_change()
+		.does_interact()
+		.does_message()
+		.does_insert()
+		.does_scheduled_tick());
+
+	// Running (0-3 power)
+	for level in 0..4 {
+		mod_data.add(TextureBuilder(
+			"SteelDrillPower" + level + "Block:BetterMiner",
+			"assets/textures/SteelDrillPower" + level + "Anim.png"
+		));
+
+		mod_data.add(
+			VoxelBuilder(
+				"SteelDrillv2Power" + level + ":BetterMiner",
+				"Steel Drill (Running)",
+				Some("scripts/clockwork/steel_drill.hail")
+			).model(SolidVoxelModel(
+				"SteelOutputBlock:BetterMiner",
+				"SteelDrillPower" + level + "Block:BetterMiner",
+				"BlockOakPlank:VoxelEras"
+			))
+		.loop_sound("SteelDrillTick:BetterMiner", 0.15 + 0.2 / (level + 1).to_float())
+		.audio_group("Machine:VoxelEras")
+		.pipette(CRAFTER_IDENTIFIER)
+		.drop(WeakItemStack(CRAFTER_IDENTIFIER, 1))
+		.break_rate(consts::break_rate_machine())
+		.tag("Solid")
+		.tag("PipeConnect")
+		.tag("ClockworkConsumer")
+		.does_break()
+		.does_place()
+		.does_interact()
+		.does_message()
+		.does_insert()
+		.does_scheduled_tick());
+	}
+
+	// Stalled
+	mod_data.add(TextureBuilder(
+        "SteelDrillStalledBlock:BetterMiner",
+        "assets/textures/SteelDrillSideStuckAnim.png"
+    ));
+
+	mod_data.add(
+		VoxelBuilder(
+			"SteelDrillv2Stuck:BetterMiner",
+			"Steel Drill (Stalled!)",
+			Some("scripts/clockwork/steel_drill.hail")
+		).model(SolidVoxelModel(
+			"SteelOutputBlock:BetterMiner",
+			"SteelDrillStalledBlock:BetterMiner",
+			"BlockOakPlank:VoxelEras"
+		))
+		.pipette(CRAFTER_IDENTIFIER)
+		.drop(WeakItemStack(CRAFTER_IDENTIFIER, 1))
+		.break_rate(consts::break_rate_machine())
+		.tag("Solid")
+		.tag("PipeConnect")
+		.tag("ClockworkConsumer")
+		.does_break()
+		.does_place()
+		.does_interact()
+		.does_message()
+		.does_insert()
+		.does_scheduled_tick());
+}
+
+fn on_break(voxel: VoxelVariant, location: Location, target: Location, entity: Option<Entity>, mut game_state: GameState) -> EventResponse {
+	if location.down() == target || location.up() == target {
+		game_state.send_message_delayed(
+		location,
+		"Lazy",
+		MetaData());
+	}
+
+	Accept()
+}
+
+fn on_place(voxel: VoxelVariant, location: Location, target: Location, entity: Option<Entity>, mut game_state: GameState) -> EventResponse {
+	if location.down() == target || location.up() == target {
+		game_state.send_message_delayed(
+		location,
+		"Lazy",
+		MetaData());
+	}
+
+	Accept()
+}
+
+fn on_insert(voxel: VoxelVariant, location: Location, slot: i64, stack: ItemStack, direction: VoxelDirection, game_state: GameState) -> EventResponse {
+	Cancel()
+}
+
+fn on_interact(voxel: VoxelVariant, location: Location, entity: Entity, mut game_state: GameState) -> EventResponse {
+	let last_interact = voxel.metadata.get_u64("LastInteract");
+	if last_interact.is_some() && game_state.tick < last_interact.unwrap() + INTERACT_DELAY {
+		return Cancel();
+	}
+
+	let stored_energy = voxel.metadata.get_u64("Fuel");
+	let stored_energy = if stored_energy.is_some() {
+		stored_energy.unwrap()
+	} else {
+		0
+	};
+
+	if stored_energy + ENERGY_PER_INTERACT > MAX_ENERGY {
+		return Cancel();
+	}
+
+	let mut new_state = voxel.metadata;
+	new_state.set_u64("LastInteract", game_state.tick);
+	new_state.set_u64("Fuel", stored_energy + ENERGY_PER_INTERACT);
+
+	game_state.set_voxel(
+		location,
+		voxel.get_variant(new_state)
+	);
+
+	game_state.send_message_delayed(
+		location,
+		"Lazy",
+		MetaData()
+	);
+
+	Accept()
+}
+
+fn on_message(voxel: VoxelVariant, location: Location, type: String, message: MetaData, mut game_state: GameState) -> EventResponse {
+	if type != "CLOCKWORK" {
+		if type == "Lazy" || type == "LazyPipe" {
+			on_scheduled_tick(voxel, location, game_state);
+			return Accept();
+		}
+		return Cancel();
+	}
+	let energy = message.get_u64("Transfer").expect("Should have transfer");
+
+	let stored_energy = voxel.metadata.get_u64("Fuel");
+	let stored_energy = if stored_energy.is_some() {
+		stored_energy.unwrap()
+	} else {
+		0
+	};
+
+	if stored_energy + energy > MAX_ENERGY / 2 {
+		return Cancel();
+	}
+
+	let mut new_state = voxel.metadata;
+	new_state.set_u64("Fuel", stored_energy + energy);
+
+	if !new_state.has_tag("Run") {
+		game_state.send_message_delayed(
+			location,
+			"Lazy",
+			MetaData()
+		);
+	}
+
+	game_state.set_voxel(
+		location,
+		voxel.get_variant(new_state)
+	);
+
+	Accept()
+}
+
+fn on_scheduled_tick( voxel: VoxelVariant, location: Location, mut game_state: GameState) {
+	let below = game_state.get_voxel(location.down()).expect("Should have below");
+
+	let mut recipe = "SteelDrill";
+	let below = below.prefab.identifier;
+
+	//Holy shit I'm the smartest programmer to ever done do it
+	//GO MY IF LADDER!
+
+	if below == "IronOre:VoxelEras" {
+		recipe = recipe + "IronOre:BetterMiner";
+	}
+	if below == "CopperOre:VoxelEras" {
+		recipe = recipe + "CopperOre:BetterMiner";
+	}
+	if below == "TinOre:VoxelEras" {
+		recipe = recipe + "TinOre:BetterMiner";
+	}
+	if below == "CoalOre:VoxelEras" {
+		recipe = recipe + "CoalOre:BetterMiner";
+	}
+	if below == "StoneOre:VoxelEras" {
+		recipe = recipe + "Stone:BetterMiner";
+	}
+	if below == "FloorOre:VoxelEras" {
+		recipe = recipe + "Floor:BetterMiner";
+	}
+
+	recipe = game_state.get_recipe_if_unlocked(recipe);
+
+	game_state.lazy_machine_on_event(
+		voxel, 
+		location, 
+		"SteelDrill:BetterMiner",
+		Vec<i64>(),
+		[0],
+		"SteelDrillv2:BetterMiner",
+		"SteelDrillv2Power0:BetterMiner",
+		1,
+		1,
+		1,
+		if game_state.random_bool(0.5) {
+			"SteelDrillProgress1:BetterMiner"
+		} else {
+			"SteelDrillProgress2:BetterMiner"
+		},
+		recipe
+	);
+
+	let mut voxel = game_state.get_voxel(location).unwrap();
+	let mut metadata = voxel.metadata;
+	let mut inventory = metadata.get_inventory().expect("Should have inventory");
+	let mut changed = false;
+
+	// Try insert above
+	if inventory[0].is_some() {
+		let remainder = game_state.try_insert_some(location.up(), Some(voxel::SIDE_BOTTOM), [inventory[0].unwrap()]);
+		if remainder.len() == 0 {
+			inventory[0] = Option<ItemStack>();
+			metadata.set_inventory(inventory);
+			changed = true;
+
+			// Notify self because this locks up
+			metadata.remove("Full");
+
+			game_state.send_message_delayed(
+				location,
+				"Lazy",
+				MetaData()
+			);
+		} else {
+			let above = game_state.get_voxel(location.up());
+			if above.is_some() && above.unwrap().prefab.identifier == "Air:VoxelEras" {
+				game_state.drop(remainder[0].unwrap(), location.up());
+
+				inventory[0] = Option<ItemStack>();
+				metadata.set_inventory(inventory);
+				changed = true;
+
+				metadata.remove("Full");
+
+				game_state.send_message_delayed(
+					location,
+					"Lazy",
+					MetaData()
+				);
+			} else {
+				changed = true;
+				inventory[0] = remainder[0];
+			}
+		}
+	}
+
+	// Lazy machines are a bit dumb.
+	// They don't let you have multiple states for things like power
+	// So... If the variant doesn't match, just fuck with it.
+	let fuel = metadata.get_u64("Fuel") ?? 0;
+
+	let identifier = if fuel != 0 && recipe.is_none() || metadata.has_tag("Stall!") || metadata.has_tag("Full") {
+		"SteelDrillv2Stuck:BetterMiner"
+	} else {
+		let running = metadata.has_tag("Run");
+		if running {
+			"SteelDrillv2Power" + (fuel / (MAX_ENERGY / 4)).min(3) + ":BetterMiner"
+		} else {
+			"SteelDrillv2:BetterMiner"
+		}
+	};
+
+	if voxel.prefab.identifier != identifier {
+		voxel = game_state.get_voxel_prefab(identifier).unwrap()
+			.get_variant(voxel.rotation, metadata);
+		changed = true;
+	}
+
+
+	if changed {
+		// Update variant only when needed
+		game_state.set_voxel(
+			location,
+			voxel.get_variant(metadata)
+		);
+	}
+}

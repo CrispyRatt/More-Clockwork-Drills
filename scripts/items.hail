@@ -1,0 +1,58 @@
+fn define(mut mod_data: ModData) {
+	mod_data.add(TextureBuilder(
+		"SmallSteelGearIcon:BetterMiner",
+		"assets/items/SmallSteelGear.png"
+	));
+
+	mod_data.add(TextureBuilder(
+		"CarbonSteelCoreIcon:BetterMiner",
+		"assets/items/CarbonSteelCore.png"
+	));
+    
+	mod_data.add(
+		ItemBuilder(
+			"SmallSteelGear:BetterMiner",
+			"Small Carbon Steel Gear",
+			"Tiny gears for tough mechanisms! \nStacks to 128",
+			"SmallSteelGearIcon:BetterMiner"
+		).stacking_to(128)
+	);
+
+	mod_data.add(
+		ItemBuilder(
+			"CarbonSteelCore:BetterMiner",
+			"Carbon Steel Clockwork Core",
+			"A more durable clockwork heart. \nStacks to 128",
+			"CarbonSteelCoreIcon:BetterMiner"
+		).stacking_to(128)
+	);
+
+	mod_data.add(
+		RecipeBuilder(
+			"SmallSteelGear:BetterMiner",
+			"Fasten Carbon Steel parts into Small Steel Gear",
+			5,
+			"SmallSteelGearIcon:BetterMiner",
+			["Assembler:VoxelEras"],
+			[
+			WeakItemStack("CarbonSteelRing:VoxelEras", 3), 
+			WeakItemStack("CarbonSteelBolt:VoxelEras", 6), 
+			WeakItemStack("CarbonSteelPlate:VoxelEras", 2)
+			],
+			[WeakItemStack("SmallSteelGear:BetterMiner", 6)]
+		).with_complexity(TICK_RATE * 6));
+
+	mod_data.add(
+		RecipeBuilder(
+			"CarbonSteelCore:BetterMiner",
+			"Form a more durable Clockwork Core",
+			3,
+			"CarbonSteelCoreIcon:BetterMiner",
+			["Assembler:VoxelEras"],
+			[WeakItemStack("SmallSteelGear:BetterMiner", 3),
+			WeakItemStack("CarbonSteelPlate:VoxelEras", 1),
+			WeakItemStack("ClockworkCore:VoxelEras", 1)],
+			[WeakItemStack("CarbonSteelCore:BetterMiner", 2)]
+		).with_complexity(TICK_RATE * 6));
+
+}
